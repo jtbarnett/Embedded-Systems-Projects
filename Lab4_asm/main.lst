@@ -1,0 +1,390 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000         ;*******************************************************
+                       ************
+    2 00000000         ; main.s
+    3 00000000         ; Author: ***update this***
+    4 00000000         ; Date Created: 11/18/2016
+    5 00000000         ; Last Modified: 11/18/2016
+    6 00000000         ; Section Number: ***update this***
+    7 00000000         ; Instructor: ***update this***
+    8 00000000         ; Lab number: 4 
+    9 00000000         ;   Brief description of the program
+   10 00000000         ; The overall objective of this system is an interactive
+                        alarm
+   11 00000000         ; Hardware connections
+   12 00000000         ;   PF4 is switch input  (1 = switch not pressed, 0 = sw
+                       itch pressed)
+   13 00000000         ;   PF3 is LED output    (1 activates green LED) 
+   14 00000000         ; The specific operation of this system 
+   15 00000000         ;   1) Make PF3 an output and make PF4 an input (enable 
+                       PUR for PF4). 
+   16 00000000         ;   2) The system starts with the LED OFF (make PF3 =0).
+                        
+   17 00000000         ;   3) Delay for about 100 ms
+   18 00000000         ;   4) If the switch is pressed (PF4 is 0),`
+   19 00000000         ;      then toggle the LED once, else turn the LED OFF. 
+                       
+   20 00000000         ;   5) Repeat steps 3 and 4 over and over
+   21 00000000         ;*******************************************************
+                       ************
+   22 00000000         
+   23 00000000 400253FC 
+                       GPIO_PORTF_DATA_R
+                               EQU              0x400253FC
+   24 00000000 40025400 
+                       GPIO_PORTF_DIR_R
+                               EQU              0x40025400
+   25 00000000 40025420 
+                       GPIO_PORTF_AFSEL_R
+                               EQU              0x40025420
+   26 00000000 40025510 
+                       GPIO_PORTF_PUR_R
+                               EQU              0x40025510
+   27 00000000 4002551C 
+                       GPIO_PORTF_DEN_R
+                               EQU              0x4002551C
+   28 00000000 40025528 
+                       GPIO_PORTF_AMSEL_R
+                               EQU              0x40025528
+   29 00000000 4002552C 
+                       GPIO_PORTF_PCTL_R
+                               EQU              0x4002552C
+   30 00000000 400FE608 
+                       SYSCTL_RCGCGPIO_R
+                               EQU              0x400FE608
+   31 00000000 40025520 
+                       GPIO_PORTF_LOCK_R
+                               EQU              0x40025520
+   32 00000000 40025524 
+                       GPIO_PORTF_CR_R
+                               EQU              0x40025524
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+   33 00000000 4C4F434B 
+                       GPIO_LOCK_KEY
+                               EQU              0x4C4F434B
+   34 00000000 0003C8C0 
+                       DELAY_VALUE
+                               EQU              0x0003C8C0  ; 0x00061A80 for Si
+                                                            mulation and 0x0008
+                                                            2355 for Board 0x00
+                                                            03C8C0
+   35 00000000 00000008 
+                       GREEN   EQU              0x08
+   36 00000000         
+   37 00000000                 AREA             |.text|, CODE, READONLY, ALIGN=
+2
+   38 00000000                 THUMB
+   39 00000000                 EXPORT           Start
+   40 00000000         Start
+   41 00000000 F000 F825       BL               GPIOF_INIT
+   42 00000004 4823            LDR              R0, =GPIO_PORTF_DATA_R
+   43 00000006 F04F 0110       MOV              R1, #0x10
+   44 0000000A 6001            STR              R1, [R0]
+   45 0000000C         
+   46 0000000C         loop
+   47 0000000C F000 F804       BL               CHECK_INPUT
+   48 00000010 E7FC            B                loop
+   49 00000012         
+   50 00000012         DELAY
+   51 00000012 1E40            SUBS             R0, R0, #0x01
+   52 00000014 D1FD            BNE              DELAY
+   53 00000016 4770            BX               LR
+   54 00000018         
+   55 00000018         CHECK_INPUT
+   56 00000018 481E            LDR              R0, =GPIO_PORTF_DATA_R
+   57 0000001A 6801            LDR              R1, [R0]
+   58 0000001C F001 0110       AND              R1, R1, #0x10
+   59 00000020 2900            CMP              R1, #0x00
+   60 00000022 D000            BEQ              SWITCH_ON
+   61 00000024 D10E            BNE              SWITCH_OFF
+   62 00000026         
+   63 00000026         SWITCH_ON
+   64 00000026 481B            LDR              R0, =GPIO_PORTF_DATA_R
+   65 00000028 F04F 0108       MOV              R1, #GREEN
+   66 0000002C 6001            STR              R1, [R0]
+   67 0000002E 481A            LDR              R0, =DELAY_VALUE
+   68 00000030 F7FF FFEF       BL               DELAY
+   69 00000034 4817            LDR              R0, =GPIO_PORTF_DATA_R
+   70 00000036 F04F 0110       MOV              R1, #0x10
+   71 0000003A 6001            STR              R1, [R0]
+   72 0000003C 4816            LDR              R0, =DELAY_VALUE
+   73 0000003E F7FF FFE8       BL               DELAY
+   74 00000042 E7E3            B                loop
+   75 00000044         
+   76 00000044         SWITCH_OFF
+   77 00000044 4813            LDR              R0, =GPIO_PORTF_DATA_R
+   78 00000046 F04F 0110       MOV              R1, #0x10
+   79 0000004A 6001            STR              R1, [R0]
+   80 0000004C E7DE            B                loop
+   81 0000004E         
+   82 0000004E         GPIOF_INIT
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+   83 0000004E 4813            LDR              R0, =SYSCTL_RCGCGPIO_R
+   84 00000050 6801            LDR              R1, [R0]
+   85 00000052 F041 0120       ORR              R1, R1, #0x20
+   86 00000056 6001            STR              R1, [R0]
+   87 00000058 BF00            NOP
+   88 0000005A BF00            NOP
+   89 0000005C 4810            LDR              R0, =GPIO_PORTF_LOCK_R
+   90 0000005E 4911            LDR              R1, =GPIO_LOCK_KEY
+   91 00000060 6001            STR              R1, [R0]
+   92 00000062 4811            LDR              R0, =GPIO_PORTF_CR_R
+   93 00000064 F04F 0118       MOV              R1, #0x18
+   94 00000068 6001            STR              R1, [R0]
+   95 0000006A 4810            LDR              R0, =GPIO_PORTF_AMSEL_R
+   96 0000006C F04F 0100       MOV              R1, #0x00
+   97 00000070 6001            STR              R1, [R0]
+   98 00000072 480F            LDR              R0, =GPIO_PORTF_PCTL_R
+   99 00000074 6001            STR              R1, [R0]
+  100 00000076 480F            LDR              R0, =GPIO_PORTF_AFSEL_R
+  101 00000078 6001            STR              R1, [R0]
+  102 0000007A 480F            LDR              R0, =GPIO_PORTF_DIR_R
+  103 0000007C F04F 0108       MOV              R1, #0x08
+  104 00000080 6001            STR              R1, [R0]
+  105 00000082 480E            LDR              R0, =GPIO_PORTF_PUR_R
+  106 00000084 F04F 0110       MOV              R1, #0x10
+  107 00000088 6001            STR              R1, [R0]
+  108 0000008A 480D            LDR              R0, =GPIO_PORTF_DEN_R
+  109 0000008C F04F 0118       MOV              R1, #0x18
+  110 00000090 6001            STR              R1, [R0]
+  111 00000092 4770            BX               LR
+  112 00000094         
+  113 00000094         
+  114 00000094                 ALIGN                        ; make sure the end
+                                                             of this section is
+                                                             aligned
+  115 00000094                 END                          ; end of file
+              400253FC 
+              0003C8C0 
+              400FE608 
+              40025520 
+              4C4F434B 
+              40025524 
+              40025528 
+              4002552C 
+              40025420 
+              40025400 
+              40025510 
+              4002551C 
+Command Line: --debug --xref --cpu=Cortex-M4.fp --apcs=interwork --depend=.\mai
+n.d -o.\main.o -IC:\Keil\ARM\RV31\INC -IC:\Keil\ARM\CMSIS\Include -IC:\Keil\ARM
+\Inc\TI\TM4C123 --predefine="__EVAL SETA 1" --list=.\main.lst main.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+.text 00000000
+
+Symbol: .text
+   Definitions
+      At line 37 in file main.s
+   Uses
+      None
+Comment: .text unused
+CHECK_INPUT 00000018
+
+Symbol: CHECK_INPUT
+   Definitions
+      At line 55 in file main.s
+   Uses
+      At line 47 in file main.s
+Comment: CHECK_INPUT used once
+DELAY 00000012
+
+Symbol: DELAY
+   Definitions
+      At line 50 in file main.s
+   Uses
+      At line 52 in file main.s
+      At line 68 in file main.s
+      At line 73 in file main.s
+
+GPIOF_INIT 0000004E
+
+Symbol: GPIOF_INIT
+   Definitions
+      At line 82 in file main.s
+   Uses
+      At line 41 in file main.s
+Comment: GPIOF_INIT used once
+SWITCH_OFF 00000044
+
+Symbol: SWITCH_OFF
+   Definitions
+      At line 76 in file main.s
+   Uses
+      At line 61 in file main.s
+Comment: SWITCH_OFF used once
+SWITCH_ON 00000026
+
+Symbol: SWITCH_ON
+   Definitions
+      At line 63 in file main.s
+   Uses
+      At line 60 in file main.s
+Comment: SWITCH_ON used once
+Start 00000000
+
+Symbol: Start
+   Definitions
+      At line 40 in file main.s
+   Uses
+      At line 39 in file main.s
+Comment: Start used once
+loop 0000000C
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+
+Symbol: loop
+   Definitions
+      At line 46 in file main.s
+   Uses
+      At line 48 in file main.s
+      At line 74 in file main.s
+      At line 80 in file main.s
+
+8 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Absolute symbols
+
+DELAY_VALUE 0003C8C0
+
+Symbol: DELAY_VALUE
+   Definitions
+      At line 34 in file main.s
+   Uses
+      At line 67 in file main.s
+      At line 72 in file main.s
+
+GPIO_LOCK_KEY 4C4F434B
+
+Symbol: GPIO_LOCK_KEY
+   Definitions
+      At line 33 in file main.s
+   Uses
+      At line 90 in file main.s
+Comment: GPIO_LOCK_KEY used once
+GPIO_PORTF_AFSEL_R 40025420
+
+Symbol: GPIO_PORTF_AFSEL_R
+   Definitions
+      At line 25 in file main.s
+   Uses
+      At line 100 in file main.s
+Comment: GPIO_PORTF_AFSEL_R used once
+GPIO_PORTF_AMSEL_R 40025528
+
+Symbol: GPIO_PORTF_AMSEL_R
+   Definitions
+      At line 28 in file main.s
+   Uses
+      At line 95 in file main.s
+Comment: GPIO_PORTF_AMSEL_R used once
+GPIO_PORTF_CR_R 40025524
+
+Symbol: GPIO_PORTF_CR_R
+   Definitions
+      At line 32 in file main.s
+   Uses
+      At line 92 in file main.s
+Comment: GPIO_PORTF_CR_R used once
+GPIO_PORTF_DATA_R 400253FC
+
+Symbol: GPIO_PORTF_DATA_R
+   Definitions
+      At line 23 in file main.s
+   Uses
+      At line 42 in file main.s
+      At line 56 in file main.s
+      At line 64 in file main.s
+      At line 69 in file main.s
+      At line 77 in file main.s
+
+GPIO_PORTF_DEN_R 4002551C
+
+Symbol: GPIO_PORTF_DEN_R
+   Definitions
+      At line 27 in file main.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Absolute symbols
+
+      At line 108 in file main.s
+Comment: GPIO_PORTF_DEN_R used once
+GPIO_PORTF_DIR_R 40025400
+
+Symbol: GPIO_PORTF_DIR_R
+   Definitions
+      At line 24 in file main.s
+   Uses
+      At line 102 in file main.s
+Comment: GPIO_PORTF_DIR_R used once
+GPIO_PORTF_LOCK_R 40025520
+
+Symbol: GPIO_PORTF_LOCK_R
+   Definitions
+      At line 31 in file main.s
+   Uses
+      At line 89 in file main.s
+Comment: GPIO_PORTF_LOCK_R used once
+GPIO_PORTF_PCTL_R 4002552C
+
+Symbol: GPIO_PORTF_PCTL_R
+   Definitions
+      At line 29 in file main.s
+   Uses
+      At line 98 in file main.s
+Comment: GPIO_PORTF_PCTL_R used once
+GPIO_PORTF_PUR_R 40025510
+
+Symbol: GPIO_PORTF_PUR_R
+   Definitions
+      At line 26 in file main.s
+   Uses
+      At line 105 in file main.s
+Comment: GPIO_PORTF_PUR_R used once
+GREEN 00000008
+
+Symbol: GREEN
+   Definitions
+      At line 35 in file main.s
+   Uses
+      At line 65 in file main.s
+Comment: GREEN used once
+SYSCTL_RCGCGPIO_R 400FE608
+
+Symbol: SYSCTL_RCGCGPIO_R
+   Definitions
+      At line 30 in file main.s
+   Uses
+      At line 83 in file main.s
+Comment: SYSCTL_RCGCGPIO_R used once
+13 symbols
+355 symbols in table
